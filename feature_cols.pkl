@@ -1,0 +1,5 @@
+€•˜       ]”(Œ	log_level”Œ	component”Œ
+event_type”Œstatus”Œ	cpu_usage”Œmemory_usage”Œ disk_io”Œ
+response_time”Œnetwork_latency”Œ
+warning_count”Œ
+error_count”e.

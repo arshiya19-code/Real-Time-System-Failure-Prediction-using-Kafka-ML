@@ -1,0 +1,19 @@
+FINAL METRIC COMPARISON — LSTM + Transformer Hybrid
+Logs Only (benchmark) vs Logs+Telemetry (our contribution)
+=================================================================
+Metric              Logs Only   Logs+Telemetry       Diff
+-----------------------------------------------------------------
+Accuracy               0.6675           0.9997 +   0.3322
+Precision              0.0500           0.9951 +   0.9451
+Recall                 0.4306           0.9974 +   0.5668
+F1-Score               0.0896           0.9962 +   0.9066
+AUC-ROC                0.5705           1.0000 +   0.4295
+AUC-PRC                0.0701           0.9999 +   0.9298
+
+Confusion Matrix — Logs Only:
+[[52092 24868]
+ [ 1731  1309]]
+
+Confusion Matrix — Logs+Telemetry:
+[[76945    15]
+ [    8  3032]]

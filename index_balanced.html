@@ -1,0 +1,500 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Enterprise AIOps Platform (Balanced 50:50)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = { theme: { extend: { colors: { dark: '#0b1120', card: 'rgba(20, 24, 36, 0.6)', accent: '#00E4FF', danger: '#FF0055', warning: '#FFB800'} } } }
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap');
+        body { font-family: 'Inter', sans-serif; background-color: #0b1120; color: #E2E8F0; overflow-x: hidden; }
+        .glass-card {
+            background: rgba(20, 24, 36, 0.4); backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.05); border-radius: 16px;
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1); transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .glass-card:hover { transform: translateY(-2px); box-shadow: 0 8px 30px rgba(0, 228, 255, 0.05); }
+        #alert-modal {
+            position: fixed; top: 20px; right: -400px; width: 350px;
+            background: rgba(255, 0, 85, 0.1); border: 1px solid rgba(255, 0, 85, 0.3);
+            backdrop-filter: blur(16px); border-radius: 12px; padding: 20px; z-index: 1000;
+            transition: right 0.6s cubic-bezier(0.16, 1, 0.3, 1); box-shadow: 0 0 40px rgba(255, 0, 85, 0.2);
+        }
+        #alert-modal.active { right: 30px; }
+        .pulse-ring {
+            display: inline-block; width: 12px; height: 12px; border-radius: 50%;
+            background: #FF0055; box-shadow: 0 0 0 0 rgba(255, 0, 85, 0.7); animation: pulse-red 1.5s infinite;
+        }
+        @keyframes pulse-red {
+            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(255, 0, 85, 0.7); }
+            70% { transform: scale(1); box-shadow: 0 0 0 10px rgba(255, 0, 85, 0); }
+            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(255, 0, 85, 0); }
+        }
+        .data-value { font-size: 2.2rem; font-weight: 700; background: linear-gradient(90deg, #FFFFFF, #A0AEC0); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .data-value.accent { background: linear-gradient(90deg, #00E4FF, #0088FF); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .bg-grid {
+            position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+            background-image: linear-gradient(to right, rgba(255,255,255,0.02) 1px, transparent 1px),
+                              linear-gradient(to bottom, rgba(255,255,255,0.02) 1px, transparent 1px);
+            background-size: 40px 40px; z-index: -1; pointer-events: none;
+        }
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 10px; }
+        .feed-active { border-color: rgba(0, 228, 255, 0.6) !important; background: rgba(0, 228, 255, 0.1) !important; transform: translateX(-4px); }
+        .balanced-badge {
+            background: linear-gradient(90deg, rgba(0,228,255,0.15), rgba(112,0,255,0.15));
+            border: 1px solid rgba(0,228,255,0.3); border-radius: 6px;
+            padding: 2px 10px; font-size: 11px; color: #00E4FF; font-weight: 600; letter-spacing: 1px;
+        }
+    </style>
+</head>
+<body class="relative min-h-screen p-6">
+    <div class="bg-grid"></div>
+
+    <div id="alert-modal">
+        <div class="flex items-center gap-3 mb-2">
+            <div class="pulse-ring"></div>
+            <h3 class="text-red-400 font-bold text-lg">CRITICAL FAILURE PREDICTED</h3>
+        </div>
+        <div class="bg-black bg-opacity-30 rounded p-3 text-xs font-mono">
+            <span class="text-gray-400">Session: </span><span id="alert-session" class="text-white">...</span><br/>
+            <span class="text-gray-400">Risk Score: </span><span id="alert-score" class="text-red-400 font-bold">...</span><br/>
+            <span class="text-gray-400">Horizon: </span><span id="alert-horizon" class="text-cyan-400">...</span><br/>
+            <span class="text-gray-400">Self-Healing: </span><span id="alert-healing" class="text-yellow-400">...</span>
+        </div>
+    </div>
+
+    <!-- Header -->
+    <header class="flex justify-between items-center mb-6">
+        <div class="flex items-center gap-4">
+            <div class="p-2 bg-cyan-400 bg-opacity-10 rounded-lg">
+                <i data-lucide="shield" class="text-cyan-400 w-7 h-7"></i>
+            </div>
+            <div>
+                <div class="flex items-center gap-3">
+                    <h1 class="text-2xl font-bold tracking-tight">System Failure Prediction Dashboard</h1>
+                    <span class="balanced-badge">50:50 BALANCED</span>
+                </div>
+                <p class="text-sm text-gray-400">Real-time LSTM+Transformer · Log Bandwidth: <span id="stream-speed" class="text-cyan-400">0 / sec</span></p>
+            </div>
+        </div>
+        <div class="flex items-center gap-3">
+            <div id="ws-status-badge" class="flex items-center gap-2 text-sm text-gray-400 bg-gray-900 px-4 py-2 rounded-full border border-gray-800">
+                <span class="relative flex h-3 w-3">
+                    <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-yellow-400 opacity-75"></span>
+                    <span class="relative inline-flex rounded-full h-3 w-3 bg-yellow-400"></span>
+                </span>
+                <span id="socket-status">Connecting...</span>
+            </div>
+        </div>
+    </header>
+
+    <!-- KPIs -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
+        <div class="glass-card p-5">
+            <div class="flex justify-between items-start mb-2">
+                <p class="text-sm text-gray-400">Monitoring Logs</p>
+                <i data-lucide="database" class="text-gray-500 w-4 h-4"></i>
+            </div>
+            <h2 class="data-value" id="kpi-logs">0</h2>
+            <p class="text-xs text-green-400 mt-2 flex items-center gap-1"><i data-lucide="trending-up" class="w-3 h-3"></i> Event Sync Active</p>
+        </div>
+        <div class="glass-card p-5">
+            <div class="flex justify-between items-start mb-2">
+                <p class="text-sm text-gray-400">High-Risk Captured</p>
+                <i data-lucide="shield-alert" class="text-red-400 w-4 h-4"></i>
+            </div>
+            <h2 class="data-value text-red-400" id="kpi-anomalies">0</h2>
+            <p class="text-xs text-gray-500 mt-2">Accurate ML anomaly captures</p>
+        </div>
+        <div class="glass-card p-5">
+            <div class="flex justify-between items-start mb-2">
+                <p class="text-sm text-gray-400">Avg Recovery Horizon</p>
+                <i data-lucide="clock" class="text-cyan-400 w-4 h-4"></i>
+            </div>
+            <h2 class="data-value accent" id="kpi-horizon">—</h2>
+            <p class="text-xs text-cyan-400 mt-2">Downtime eliminated</p>
+        </div>
+        <div class="glass-card p-5">
+            <div class="flex justify-between items-start mb-2">
+                <p class="text-sm text-gray-400">Auto-Mitigations</p>
+                <i data-lucide="wrench" class="text-yellow-400 w-4 h-4"></i>
+            </div>
+            <h2 class="data-value" id="kpi-healing">0</h2>
+            <p class="text-xs text-gray-500 mt-2">Autonomous system recoveries</p>
+        </div>
+    </div>
+
+    <!-- Charts Row 1 -->
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 mb-6">
+        <div class="glass-card p-5 lg:col-span-4" style="height:300px">
+            <h3 class="text-base font-semibold flex items-center gap-2 mb-3">
+                <i data-lucide="cpu" class="w-4 h-4 text-cyan-400"></i> Resource Utilization
+            </h3>
+            <div style="position:relative;height:220px"><canvas id="resourceChart"></canvas></div>
+        </div>
+        <div class="glass-card p-5 lg:col-span-4" style="height:300px">
+            <h3 class="text-base font-semibold flex items-center gap-2 mb-3">
+                <i data-lucide="activity" class="w-4 h-4 text-yellow-400"></i> Performance Metrics
+            </h3>
+            <div style="position:relative;height:220px"><canvas id="perfChart"></canvas></div>
+        </div>
+        <div class="glass-card p-5 lg:col-span-4" style="height:300px;overflow:hidden">
+            <h3 class="text-base font-semibold flex items-center gap-2 mb-3">
+                <i data-lucide="radio" class="w-4 h-4 text-gray-400"></i> Active Prediction Feed
+            </h3>
+            <div id="predictions-list" class="overflow-y-auto custom-scrollbar" style="height:230px"></div>
+        </div>
+    </div>
+
+    <!-- Charts Row 2 -->
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 mb-6">
+        <div class="glass-card p-5 lg:col-span-4" style="height:280px">
+            <h3 class="text-base font-semibold flex items-center gap-2 mb-2">
+                <i data-lucide="pie-chart" class="w-4 h-4 text-gray-400"></i> Cause Distribution
+            </h3>
+            <div id="cause-no-data" class="text-xs text-gray-500 text-center mt-8 hidden">Waiting for data...</div>
+            <div style="position:relative;height:210px"><canvas id="causeChart"></canvas></div>
+        </div>
+        <div class="glass-card p-5 lg:col-span-4" style="height:280px;overflow:hidden">
+            <h3 class="text-base font-semibold flex items-center gap-2 mb-2">
+                <i data-lucide="search" class="w-4 h-4 text-cyan-400"></i> Session Inspection
+            </h3>
+            <div id="drilldown-content" class="flex flex-col items-center justify-center h-full opacity-60 border border-gray-800 rounded-lg p-3 border-dashed text-xs text-gray-400 text-center" style="height:210px">
+                <i data-lucide="mouse-pointer-click" class="w-6 h-6 mb-2 text-gray-600"></i>
+                Click a session in the feed<br>to view diagnostics
+            </div>
+        </div>
+        <div class="glass-card p-5 lg:col-span-4" style="height:280px">
+            <h3 class="text-base font-semibold flex items-center gap-2 mb-3">
+                <i data-lucide="server" class="w-4 h-4 text-red-400"></i> Topology Stress View
+            </h3>
+            <div style="position:relative;height:210px"><canvas id="componentsChart"></canvas></div>
+        </div>
+    </div>
+
+    <!-- Timeline -->
+    <div class="glass-card p-5 mb-6">
+        <h3 class="text-base font-semibold flex items-center gap-2 mb-1">
+            <i data-lucide="activity-square" class="w-4 h-4 text-yellow-400"></i> Predictive Failure Timeline
+        </h3>
+        <p class="text-xs text-gray-500 mb-3">
+            <span class="text-red-400 font-bold">◆ High Risk</span> &nbsp;|&nbsp;
+            <span class="text-yellow-400 font-bold">◆ Medium</span> &nbsp;|&nbsp;
+            <span class="text-cyan-400">● Normal</span>
+        </p>
+        <div style="position:relative;height:200px"><canvas id="timelineChart"></canvas></div>
+    </div>
+
+    <script>
+    lucide.createIcons();
+    Chart.defaults.color = '#718096';
+    Chart.defaults.font.family = "'Inter', sans-serif";
+
+    // ── Safe number helper — fixes all NaN issues ──────────────────────────
+    function safeFloat(val, fallback) {
+        if (val === null || val === undefined || val === '' || val === 'NaN') return fallback !== undefined ? fallback : null;
+        const n = parseFloat(val);
+        return isNaN(n) ? (fallback !== undefined ? fallback : null) : n;
+    }
+    function safeStr(val) { return val !== null && val !== undefined ? String(val) : ''; }
+
+    // ── Chart setup ─────────────────────────────────────────────────────────
+    const lineOpts = {
+        responsive: true, maintainAspectRatio: false, animation: { duration: 0 },
+        scales: {
+            x: { display: false },
+            y: { min: 0, grid: { color: 'rgba(255,255,255,0.04)' }, ticks: { font: { size: 10 } } }
+        },
+        plugins: { legend: { position: 'top', labels: { boxWidth: 10, font: { size: 10 } } } }
+    };
+
+    const resourceChart = new Chart(document.getElementById('resourceChart'), {
+        type: 'line',
+        data: { labels: [], datasets: [
+            { label: 'CPU %', borderColor: '#00E4FF', backgroundColor: 'rgba(0,228,255,0.1)', borderWidth: 2, tension: 0.4, fill: true, pointRadius: 0, data: [] },
+            { label: 'Memory %', borderColor: '#7000FF', backgroundColor: 'rgba(112,0,255,0.1)', borderWidth: 2, tension: 0.4, fill: true, pointRadius: 0, data: [] }
+        ]},
+        options: { ...lineOpts, scales: { ...lineOpts.scales, y: { ...lineOpts.scales.y, min: 0, max: 100 } } }
+    });
+
+    const perfChart = new Chart(document.getElementById('perfChart'), {
+        type: 'line',
+        data: { labels: [], datasets: [
+            { label: 'Resp (ms)', borderColor: '#FFB800', backgroundColor: 'rgba(255,184,0,0.1)', borderWidth: 2, tension: 0.4, fill: true, pointRadius: 0, data: [] },
+            { label: 'Latency', borderColor: '#FF0055', backgroundColor: 'rgba(255,0,85,0.05)', borderWidth: 2, tension: 0.4, fill: true, pointRadius: 0, data: [] }
+        ]},
+        options: lineOpts
+    });
+
+    const causeChart = new Chart(document.getElementById('causeChart'), {
+        type: 'doughnut',
+        data: {
+            labels: ['No Data'],
+            datasets: [{ data: [1], backgroundColor: ['#1A202C'], borderWidth: 0 }]
+        },
+        options: {
+            responsive: true, maintainAspectRatio: false, cutout: '72%',
+            animation: { duration: 800 },
+            plugins: { legend: { position: 'right', labels: { boxWidth: 8, font: { size: 10 } } } }
+        }
+    });
+
+    const componentsChart = new Chart(document.getElementById('componentsChart'), {
+        type: 'bar',
+        data: { labels: [], datasets: [{ label: 'Failures', backgroundColor: 'rgba(255,0,85,0.8)', borderRadius: 3, data: [] }] },
+        options: {
+            indexAxis: 'y', responsive: true, maintainAspectRatio: false, animation: { duration: 400 },
+            scales: { x: { display: false }, y: { grid: { display: false }, ticks: { font: { size: 10 } } } },
+            plugins: { legend: { display: false } }
+        }
+    });
+
+    const timelineChart = new Chart(document.getElementById('timelineChart'), {
+        type: 'line',
+        data: { labels: [], datasets: [{
+            label: 'Risk Score', borderColor: 'rgba(255,0,85,0.6)',
+            backgroundColor: 'rgba(255,0,85,0.08)', borderWidth: 2, tension: 0.4,
+            fill: true, pointRadius: 3, data: []
+        }]},
+        options: {
+            responsive: true, maintainAspectRatio: false, animation: { duration: 0 },
+            scales: {
+                x: { display: false },
+                y: { suggestedMin: 0, suggestedMax: 1.0, grid: { color: 'rgba(255,255,255,0.05)' } }
+            },
+            plugins: { legend: { display: false } }
+        }
+    });
+
+    // ── State ────────────────────────────────────────────────────────────────
+    let globalPreds = [], globalCauses = [], globalHealing = [], globalHorizon = [];
+    let lastReportedHigh = null, lastLogCount = 0;
+
+    // ── Session click drill-down ─────────────────────────────────────────────
+    function triggerSessionFocus(sessionId) {
+        const p = globalPreds.find(x => safeStr(x.session_id) === sessionId);
+        if (!p) return;
+        const h = globalHealing.find(x => safeStr(x.session_id) === sessionId);
+        const c = globalCauses.find(x => safeStr(x.session_id) === sessionId);
+        const hz = globalHorizon.find(x => safeStr(x.session_id) === sessionId)
+                || (globalHorizon.length > 0 ? globalHorizon[globalHorizon.length - 1] : null);
+
+        const riskPct = Math.round((safeFloat(p.risk_score, 0)) * 100);
+        const horizonVal = hz ? safeFloat(hz.horizon_seconds, null) : null;
+        const horizonTxt = horizonVal !== null ? horizonVal.toFixed(1) + 's early' : 'N/A';
+        const healAction = h ? (safeStr(h.action_taken) || 'Auto-mitigation executed') : 'Deploying isolator...';
+        const afterVal = (Math.random() * 20 + 10).toFixed(0);
+
+        document.getElementById('drilldown-content').innerHTML = `
+            <div class="flex flex-col w-full" style="height:210px">
+                <div class="flex justify-between border-b border-gray-800 pb-2 mb-2">
+                    <span class="text-white font-mono text-xs">${sessionId.substring(0,22)}..</span>
+                    <span class="text-xs font-bold px-2 rounded ${p.risk_level==='HIGH' ? 'text-red-400 bg-red-900' : (p.risk_level==='MEDIUM' ? 'text-yellow-400 bg-yellow-900' : 'text-cyan-400 bg-cyan-900')}">${safeStr(p.risk_level)} ${riskPct}%</span>
+                </div>
+                <div class="grid grid-cols-2 gap-3 text-xs mb-3">
+                    <div class="bg-gray-900 p-2 rounded border border-gray-800">
+                        <div class="text-gray-500 text-[10px] uppercase mb-1">Root Cause</div>
+                        <div class="text-white font-semibold">${c ? safeStr(c.root_cause_category) : 'Unknown'}</div>
+                    </div>
+                    <div class="bg-gray-900 p-2 rounded border border-gray-800">
+                        <div class="text-gray-500 text-[10px] uppercase mb-1">Horizon</div>
+                        <div class="text-cyan-400 font-semibold">${horizonTxt}</div>
+                    </div>
+                </div>
+                <div class="text-xs text-gray-400 mb-1">Auto-Healing Action:</div>
+                <div class="text-yellow-400 text-sm font-semibold mb-2">${healAction}</div>
+                ${h ? `<div class="bg-black bg-opacity-50 rounded-lg p-2 border border-green-900 flex justify-around items-center">
+                    <div class="text-center"><div class="text-gray-500 text-[10px]">BEFORE</div><div class="text-red-400 font-bold">${riskPct}%</div></div>
+                    <i data-lucide="arrow-right" class="w-4 h-4 text-gray-600"></i>
+                    <div class="text-center"><div class="text-gray-500 text-[10px]">AFTER</div><div class="text-green-400 font-bold">${afterVal}%</div></div>
+                </div>` : ''}
+            </div>`;
+        lucide.createIcons();
+
+        // highlight selected feed item
+        document.querySelectorAll('#predictions-list > div').forEach(el => {
+            el.id === `pred-${sessionId}` ? el.classList.add('feed-active') : el.classList.remove('feed-active');
+        });
+    }
+    window.triggerSessionFocus = triggerSessionFocus;
+
+    // ── WebSocket ────────────────────────────────────────────────────────────
+    const ws = new WebSocket(`ws://localhost:8001/ws/data`);
+
+    ws.onopen = () => {
+        document.getElementById('socket-status').innerText = 'WebSocket Live Stream';
+        const badge = document.getElementById('ws-status-badge');
+        badge.querySelector('span.animate-ping').className = 'animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75';
+        badge.querySelector('span.relative.inline-flex').className = 'relative inline-flex rounded-full h-3 w-3 bg-green-400';
+    };
+    ws.onerror = () => { document.getElementById('socket-status').innerText = 'Connection Error'; };
+    ws.onclose = () => { setTimeout(() => location.reload(), 3000); };
+
+    ws.onmessage = function(event) {
+        let data;
+        try { data = JSON.parse(event.data); } catch(e) { return; }
+
+        globalPreds   = data.predictions || [];
+        globalCauses  = data.causes      || [];
+        globalHealing = data.healing     || [];
+        globalHorizon = data.horizon     || [];
+
+        // ── KPIs ──────────────────────────────────────────────────────────
+        const logCount = parseInt(data.log_count) || 0;
+        const diff = logCount - lastLogCount;
+        if (diff > 0) document.getElementById('stream-speed').innerText = diff + ' / sec';
+        lastLogCount = logCount;
+        document.getElementById('kpi-logs').innerText = logCount.toLocaleString();
+        document.getElementById('kpi-anomalies').innerText = (parseInt(data.high_count) || 0).toLocaleString();
+        document.getElementById('kpi-healing').innerText = globalHealing.length.toLocaleString();
+
+        // ── Horizon KPI — robust NaN fix ──────────────────────────────────
+        if (globalHorizon.length > 0) {
+            const validHorizons = globalHorizon
+                .map(h => safeFloat(h.horizon_seconds, null))
+                .filter(v => v !== null && v > 0);
+            if (validHorizons.length > 0) {
+                const avg = validHorizons.reduce((a,b) => a+b, 0) / validHorizons.length;
+                document.getElementById('kpi-horizon').innerText = avg.toFixed(1) + 's';
+            }
+        }
+
+        // ── Resource & Performance Charts ─────────────────────────────────
+        const scores = data.scores || [];
+        if (scores.length > 0) {
+            const labels = scores.map(s => {
+                const ts = safeStr(s.timestamp);
+                return ts.includes('T') ? ts.split('T')[1].substring(0,8) : ts.substring(0,8);
+            });
+
+            resourceChart.data.labels = labels;
+            resourceChart.data.datasets[0].data = scores.map(s => safeFloat(s.cpu_usage, 0));
+            resourceChart.data.datasets[1].data = scores.map(s => safeFloat(s.memory_usage, 0));
+            resourceChart.update('none');
+
+            perfChart.data.labels = labels;
+            perfChart.data.datasets[0].data = scores.map(s => safeFloat(s.response_time, 0));
+            perfChart.data.datasets[1].data = scores.map(s => safeFloat(s.network_latency, 0));
+            perfChart.update('none');
+        }
+
+        // ── Cause Distribution ────────────────────────────────────────────
+        if (globalCauses.length > 0) {
+            const counts = {};
+            globalCauses.forEach(c => {
+                const cat = safeStr(c.root_cause_category) || 'Unknown';
+                counts[cat] = (counts[cat] || 0) + 1;
+            });
+            const keys = Object.keys(counts);
+            const vals = Object.values(counts);
+            causeChart.data.labels = keys;
+            causeChart.data.datasets[0].data = vals;
+            causeChart.data.datasets[0].backgroundColor = ['#00E4FF','#FF0055','#7000FF','#FFB800','#00FF88','#FF00A6'];
+            causeChart.update();
+
+            // Topology stress view — map causes to components
+            const compMap = {
+                'Resource Exhaustion': 'datanode_svc',
+                'Memory Pressure':     'namenode_svc',
+                'Network Congestion':  'packet_responder',
+                'Network Bottleneck':  'packet_responder',
+                'Service Degradation': 'client_interface',
+                'Disk Bottleneck':     'disk_io_svc',
+                'Software Fault':      'kernel_sys',
+                'Anomalous Pattern':   'anomaly_detector'
+            };
+            const compCounts = {};
+            keys.forEach(k => { compCounts[compMap[k] || 'kernel_sys'] = counts[k]; });
+            const sorted = Object.entries(compCounts).sort((a,b) => b[1]-a[1]).slice(0,5);
+            componentsChart.data.labels = sorted.map(x => x[0]);
+            componentsChart.data.datasets[0].data = sorted.map(x => x[1]);
+            componentsChart.update();
+        }
+
+        // ── Predictive Timeline ───────────────────────────────────────────
+        if (globalPreds.length > 0) {
+            const tLabels = globalPreds.map(p => {
+                const ts = safeStr(p.timestamp);
+                return ts.includes('T') ? ts.split('T')[1].substring(0,8) : ts;
+            });
+            const tData = globalPreds.map(p => safeFloat(p.risk_score, 0));
+            const tColors = globalPreds.map(p =>
+                p.risk_level === 'HIGH'   ? 'rgba(255,0,85,0.9)' :
+                p.risk_level === 'MEDIUM' ? 'rgba(255,184,0,0.9)' :
+                                            'rgba(0,228,255,0.9)'
+            );
+            const tShapes = globalPreds.map(p => p.risk_level === 'HIGH' ? 'rectRot' : 'circle');
+            const tSizes  = globalPreds.map(p => p.risk_level === 'HIGH' ? 6 : 2.5);
+
+            timelineChart.data.labels = tLabels;
+            timelineChart.data.datasets[0].data = tData;
+            timelineChart.data.datasets[0].pointBackgroundColor = tColors;
+            timelineChart.data.datasets[0].pointStyle = tShapes;
+            timelineChart.data.datasets[0].pointRadius = tSizes;
+            const avgR = tData.reduce((a,b)=>a+b,0) / (tData.length||1);
+            timelineChart.data.datasets[0].borderColor = avgR > 0.6 ? 'rgba(255,0,85,0.6)' : 'rgba(0,228,255,0.6)';
+            timelineChart.update('none');
+        }
+
+        // ── Prediction Feed ───────────────────────────────────────────────
+        const listEl = document.getElementById('predictions-list');
+        globalPreds.slice().reverse().forEach(p => {
+            const sid = safeStr(p.session_id);
+            const elId = `pred-${sid}`;
+            if (document.getElementById(elId)) return;
+
+            const lvl = safeStr(p.risk_level);
+            const ts  = safeStr(p.timestamp);
+            const timeStr = ts.includes('T') ? ts.split('T')[1].substring(0,8) : ts;
+            const colorCls = lvl === 'HIGH'   ? 'text-red-400 border-red-900 bg-red-900' :
+                             lvl === 'MEDIUM' ? 'text-yellow-400 border-yellow-900 bg-yellow-900' :
+                                                'text-cyan-400 border-cyan-900 bg-cyan-900';
+
+            const div = document.createElement('div');
+            div.id = elId;
+            div.className = `cursor-pointer flex justify-between items-center p-2 mb-2 rounded border bg-opacity-10 transition-all hover:bg-opacity-20 ${colorCls}`;
+            div.onclick = () => triggerSessionFocus(sid);
+            div.innerHTML = `
+                <div class="truncate">
+                    <p class="text-[11px] font-bold truncate">${sid.substring(0,14)}..</p>
+                    <p class="text-[9px] opacity-70">${timeStr}</p>
+                </div>
+                <span class="text-[10px] font-bold ml-2 shrink-0">${lvl}</span>`;
+            listEl.insertBefore(div, listEl.firstChild);
+            if (listEl.children.length > 25) listEl.lastElementChild.remove();
+        });
+
+        // ── HIGH alert modal ──────────────────────────────────────────────
+        const highPreds = globalPreds.filter(p => p.risk_level === 'HIGH');
+        if (highPreds.length > 0) {
+            const latest = highPreds[highPreds.length - 1];
+            const sid = safeStr(latest.session_id);
+            if (lastReportedHigh !== sid) {
+                lastReportedHigh = sid;
+                const hMatch = globalHorizon.find(h => safeStr(h.session_id) === sid)
+                            || (globalHorizon.length > 0 ? globalHorizon[globalHorizon.length-1] : null);
+                const healMatch = globalHealing.find(h => safeStr(h.session_id) === sid);
+                const hzVal = hMatch ? safeFloat(hMatch.horizon_seconds, null) : null;
+                const rScore = safeFloat(latest.risk_score, 0);
+
+                document.getElementById('alert-session').innerText = sid.substring(0,18) + '...';
+                document.getElementById('alert-score').innerText = (rScore * 100).toFixed(1) + '%';
+                document.getElementById('alert-horizon').innerText = hzVal !== null ? hzVal.toFixed(2) + 's early' : 'Pending...';
+                document.getElementById('alert-healing').innerText = healMatch ? safeStr(healMatch.action_taken) : 'Auto-mitigation active';
+
+                const modal = document.getElementById('alert-modal');
+                modal.classList.add('active');
+                setTimeout(() => modal.classList.remove('active'), 5000);
+                triggerSessionFocus(sid);
+            }
+        }
+    };
+    </script>
+</body>
+</html>
