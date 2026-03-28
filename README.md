@@ -1,2 +1,142 @@
-# Real-Time-System-Failure-Prediction-using-Kafka-ML
-Built a real-time AIOps platform using HDFS, MapReduce, Kafka, and FastAPI to process logs with telemetry metrics, detect anomalies, predict failures, and perform root cause analysis. Includes two dashboards: 97% normal/3% anomaly and balanced 50:50, both showing live monitoring, predictive insights, and self-healing actions.
+Real-Time AIOps System Failure Prediction Platform
+Overview
+
+An end-to-end AIOps (Artificial Intelligence for IT Operations) platform that ingests large-scale system logs, detects anomalies, predicts failures before they occur, identifies root causes, and simulates self-healing actions — all visualized through real-time interactive dashboards.
+
+This project replicates a production-grade monitoring system similar to tools like Splunk, Datadog, and Dynatrace.
+
+Key Features
+⚡ Real-time log streaming using Apache Kafka
+🗄️ Distributed storage using HDFS
+🔍 Batch analytics using Hadoop MapReduce
+📊 Telemetry-driven anomaly detection (CPU, memory, latency, etc.)
+🔮 Predictive failure detection using risk scoring
+🧩 Root cause analysis across system components
+🛠️ Automated self-healing action simulation
+📡 Live dashboards with WebSocket streaming
+🖥️ Dashboards
+1️⃣ System Intelligence Dashboard (97% Normal / 3% Anomaly)
+Real-world imbalanced dataset simulation
+Live log monitoring and anomaly detection
+System health overview and resource tracking
+Risk-level classification (LOW / MEDIUM / HIGH)
+
+👉 Demonstrates real production scenarios where anomalies are rare
+
+2️⃣ Balanced AIOps Dashboard (50% Normal / 50% Anomaly)
+Balanced dataset for model evaluation
+Clear visualization of anomaly behavior
+Failure prediction timeline and horizon
+Root cause distribution and component stress
+Self-healing action tracking
+
+👉 Demonstrates model performance and analytical clarity
+
+⚙️ Architecture
+HDFS (500K Logs)
+      ↓
+Hadoop MapReduce (Batch Analysis)
+      ↓
+Kafka Producer (Streaming Logs)
+      ↓
+Kafka Topic
+      ↓
+Kafka Consumer (Processing + Risk Scoring)
+      ↓
+CSV Storage (Predictions, Causes, Healing)
+      ↓
+FastAPI (WebSocket Server)
+      ↓
+Real-Time Dashboard (Frontend)
+
+📊 Data & Processing
+📁 Dataset: HDFS log dataset + synthetic telemetry metrics
+📦 Total Logs: 500,000
+⚖️ Two distributions:
+97% Normal / 3% Anomaly
+50% Normal / 50% Anomaly
+📈 Telemetry Metrics Used:
+CPU Usage
+Memory Usage
+Disk I/O
+Response Time
+Network Latency
+Warning Count
+Error Count
+🧠 Core Functionalities
+🔹 Anomaly Detection
+
+Identifies abnormal system behavior using log patterns + telemetry signals
+
+🔹 Risk Scoring
+
+Assigns risk levels:
+
+LOW
+MEDIUM
+HIGH
+🔹 Failure Prediction
+
+Predicts failures before occurrence using:
+
+Risk escalation patterns
+Prediction horizon tracking
+🔹 Root Cause Analysis
+
+Categorizes failures into:
+
+Resource Exhaustion
+Memory Pressure
+Network Issues
+Service Degradation
+Disk Bottlenecks
+🔹 Self-Healing Simulation
+
+Triggers automated recovery actions such as:
+
+Service restart
+Resource reallocation
+Traffic rerouting
+Cache cleanup
+
+🛠️ Tech Stack
+Layer	Technology
+Storage	HDFS (Hadoop)
+Processing	Hadoop MapReduce
+Streaming	Apache Kafka
+Backend	FastAPI (WebSockets)
+Data	Pandas
+Frontend	HTML, Tailwind CSS, Chart.js
+Language	Python
+
+🚀 How to Run
+1️⃣ Install dependencies
+pip install -r requirements.txt
+2️⃣ Start Kafka (ensure it's running)
+3️⃣ Run Producer
+python kafka_producer_balanced.py
+4️⃣ Run Consumer
+python kafka_consumer.py
+5️⃣ Start Backend Server
+python server_api_balanced.py
+6️⃣ Open Dashboard
+http://localhost:8001
+📸 Screenshots
+
+💡 Key Insights
+Telemetry metrics significantly improve anomaly detection accuracy
+Balanced datasets help visualize model behavior clearly
+Real-time pipelines are essential for proactive monitoring systems
+Predictive alerts reduce system downtime
+🔮 Future Improvements
+Integrate deep learning models (LSTM / Transformer)
+Replace CSV with real-time databases (MongoDB / PostgreSQL)
+Deploy on cloud (AWS / GCP / Azure)
+Add authentication and multi-user dashboards
+Integrate with Prometheus / Grafana
+
+⭐ Why This Project Stands Out
+End-to-end pipeline (Data → Processing → ML → Visualization)
+Real-time streaming architecture
+Production-like system design
+Strong relevance to Data Engineering + ML + Backend roles
