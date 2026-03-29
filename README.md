@@ -1,4 +1,5 @@
 Real-Time AIOps System Failure Prediction Platform
+An end-to-end real-time AIOps platform that processes 500,000 logs to predict system failures before they occur using streaming, analytics, and machine learning.
 Overview
 
 An end-to-end AIOps (Artificial Intelligence for IT Operations) platform that ingests large-scale system logs, detects anomalies, predicts failures before they occur, identifies root causes, and simulates self-healing actions — all visualized through real-time interactive dashboards.
@@ -133,21 +134,38 @@ Balanced dashboard (50% / 50%):
 <img width="1919" height="1001" alt="Screenshot 2026-03-27 175432" src="https://github.com/user-attachments/assets/8c5bebc9-7107-4110-90f9-b0cc9f71b766" />
 <img width="1919" height="960" alt="Screenshot 2026-03-27 175503" src="https://github.com/user-attachments/assets/30b79499-4dc4-45a2-811c-79f4ab25396d" />
 
+
+ 📈 Results & Performance
+
+- Achieved ~99% accuracy in anomaly detection using telemetry-enhanced features
+- Improved F1-score significantly compared to log-only models
+- Processed 500,000 logs in real-time using Kafka streaming
+- Reduced failure detection latency with early prediction horizon
+
 💡 Key Insights
-Telemetry metrics significantly improve anomaly detection accuracy
-Balanced datasets help visualize model behavior clearly
-Real-time pipelines are essential for proactive monitoring systems
-Predictive alerts reduce system downtime
+-Telemetry metrics significantly improve anomaly detection accuracy
+-Balanced datasets help visualize model behavior clearly
+-Real-time pipelines are essential for proactive monitoring systems
+-Predictive alerts reduce system downtime
+
+
+ 🎯 Business Value
+
+- Reduces system downtime through early failure prediction
+- Enables proactive monitoring instead of reactive alerting
+- Automates root cause analysis, saving debugging time
+- Simulates self-healing for faster recovery
+  
+
+ ⭐ Why This Project Stands Out
+- End-to-end production-like pipeline (HDFS → Kafka → ML → Dashboard)
+- Real-time streaming with WebSocket-based visualization
+- Dual dataset strategy (97:3 vs 50:50) for realistic vs analytical evaluation
+- Combines Data Engineering, Machine Learning, and Backend systems
+
 
 🔮 Future Improvements
-Integrate deep learning models (LSTM / Transformer)
-Replace CSV with real-time databases (MongoDB / PostgreSQL)
-Deploy on cloud (AWS / GCP / Azure)
-Add authentication and multi-user dashboards
-Integrate with Prometheus / Grafana
-
-⭐ Why This Project Stands Out
-End-to-end pipeline (Data → Processing → ML → Visualization)
-Real-time streaming architecture
-Production-like system design
-Strong relevance to Data Engineering + ML + Backend roles
+-Replace CSV with real-time databases (MongoDB / PostgreSQL)
+-Deploy on cloud (AWS / GCP / Azure)
+-Add authentication and multi-user dashboards
+-Integrate with Prometheus / Grafana
