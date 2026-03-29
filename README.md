@@ -1,6 +1,7 @@
 Real-Time AIOps System Failure Prediction Platform
 
 An end-to-end real-time AIOps platform that processes 500,000 logs to predict system failures before they occur using streaming, analytics, and machine learning.
+
 Overview
 
 An end-to-end AIOps (Artificial Intelligence for IT Operations) platform that ingests large-scale system logs, detects anomalies, predicts failures before they occur, identifies root causes, and simulates self-healing actions — all visualized through real-time interactive dashboards.
@@ -8,6 +9,7 @@ An end-to-end AIOps (Artificial Intelligence for IT Operations) platform that in
 This project replicates a production-grade monitoring system similar to tools like Splunk, Datadog, and Dynatrace.
 
 Key Features
+
 ⚡ Real-time log streaming using Apache Kafka
 🗄️ Distributed storage using HDFS
 🔍 Batch analytics using Hadoop MapReduce
@@ -16,6 +18,7 @@ Key Features
 🧩 Root cause analysis across system components
 🛠️ Automated self-healing action simulation
 📡 Live dashboards with WebSocket streaming
+
 🖥️ Dashboards
 
 1️⃣ System Intelligence Dashboard (97% Normal / 3% Anomaly)
@@ -52,7 +55,9 @@ FastAPI (WebSocket Server)
       ↓
 Real-Time Dashboard (Frontend)
 
+
 📊 Data & Processing
+
 📁 Dataset: HDFS log dataset + synthetic telemetry metrics
 📦 Total Logs: 500,000
 ⚖️ Two distributions:
@@ -114,6 +119,7 @@ Frontend	HTML, Tailwind CSS, Chart.js
 Language	Python
 
 🚀 How to Run
+
 1️⃣ Install dependencies
 pip install -r requirements.txt
 2️⃣ Start Kafka (ensure it's running)
@@ -125,6 +131,15 @@ python kafka_consumer.py
 python server_api_balanced.py
 6️⃣ Open Dashboard
 http://localhost:8001
+
+
+ 🎥 Demo Video
+
+📌 Full working demo of real-time AIOps pipeline, Kafka streaming, and dashboards:
+
+👉 [Watch here](https://drive.google.com/file/d/1EIVneBu-3GitQABtSAyJjV2deMJnRX6X/view?usp=sharing)
+
+
 
 📸 Screenshots:
 Imbalanced dashboard (97% / 3%):
@@ -144,6 +159,7 @@ Balanced dashboard (50% / 50%):
 - Reduced failure detection latency with early prediction horizon
 
 💡 Key Insights
+
 -Telemetry metrics significantly improve anomaly detection accuracy
 -Balanced datasets help visualize model behavior clearly
 -Real-time pipelines are essential for proactive monitoring systems
@@ -159,6 +175,7 @@ Balanced dashboard (50% / 50%):
   
 
  ⭐ Why This Project Stands Out
+ 
 - End-to-end production-like pipeline (HDFS → Kafka → ML → Dashboard)
 - Real-time streaming with WebSocket-based visualization
 - Dual dataset strategy (97:3 vs 50:50) for realistic vs analytical evaluation
