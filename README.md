@@ -15,6 +15,7 @@ Key Features
 🛠️ Automated self-healing action simulation
 📡 Live dashboards with WebSocket streaming
 🖥️ Dashboards
+
 1️⃣ System Intelligence Dashboard (97% Normal / 3% Anomaly)
 Real-world imbalanced dataset simulation
 Live log monitoring and anomaly detection
@@ -63,6 +64,7 @@ Response Time
 Network Latency
 Warning Count
 Error Count
+
 🧠 Core Functionalities
 🔹 Anomaly Detection
 
@@ -71,16 +73,17 @@ Identifies abnormal system behavior using log patterns + telemetry signals
 🔹 Risk Scoring
 
 Assigns risk levels:
-
 LOW
 MEDIUM
 HIGH
+
 🔹 Failure Prediction
 
 Predicts failures before occurrence using:
 
 Risk escalation patterns
 Prediction horizon tracking
+
 🔹 Root Cause Analysis
 
 Categorizes failures into:
@@ -93,7 +96,6 @@ Disk Bottlenecks
 🔹 Self-Healing Simulation
 
 Triggers automated recovery actions such as:
-
 Service restart
 Resource reallocation
 Traffic rerouting
@@ -121,6 +123,7 @@ python kafka_consumer.py
 python server_api_balanced.py
 6️⃣ Open Dashboard
 http://localhost:8001
+
 📸 Screenshots
 
 💡 Key Insights
@@ -128,6 +131,7 @@ Telemetry metrics significantly improve anomaly detection accuracy
 Balanced datasets help visualize model behavior clearly
 Real-time pipelines are essential for proactive monitoring systems
 Predictive alerts reduce system downtime
+
 🔮 Future Improvements
 Integrate deep learning models (LSTM / Transformer)
 Replace CSV with real-time databases (MongoDB / PostgreSQL)
