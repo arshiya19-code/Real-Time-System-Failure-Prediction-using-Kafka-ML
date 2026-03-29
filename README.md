@@ -124,7 +124,14 @@ python server_api_balanced.py
 6️⃣ Open Dashboard
 http://localhost:8001
 
-📸 Screenshots
+📸 Screenshots:
+Imbalanced dashboard (97% / 3%):
+<img width="1919" height="1020" alt="Screenshot 2026-03-25 162858" src="https://github.com/user-attachments/assets/505609a7-ed82-49c3-a99e-6b83a33750a0" />
+<img width="1918" height="973" alt="Screenshot 2026-03-25 162954" src="https://github.com/user-attachments/assets/343ce467-d43a-4346-af8e-e8d36a259662" />
+
+Balanced dashboard (50% / 50%):
+<img width="1919" height="1001" alt="Screenshot 2026-03-27 175432" src="https://github.com/user-attachments/assets/8c5bebc9-7107-4110-90f9-b0cc9f71b766" />
+<img width="1919" height="960" alt="Screenshot 2026-03-27 175503" src="https://github.com/user-attachments/assets/30b79499-4dc4-45a2-811c-79f4ab25396d" />
 
 💡 Key Insights
 Telemetry metrics significantly improve anomaly detection accuracy
